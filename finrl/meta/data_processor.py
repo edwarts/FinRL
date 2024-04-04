@@ -4,10 +4,14 @@ import numpy as np
 import pandas as pd
 
 from finrl.meta.data_processors.processor_alpaca import AlpacaProcessor as Alpaca
+from finrl.meta.data_processors.processor_localcustom import LocalCustom
 from finrl.meta.data_processors.processor_wrds import WrdsProcessor as Wrds
 from finrl.meta.data_processors.processor_yahoofinance import (
     YahooFinanceProcessor as YahooFinance,
 )
+
+
+
 
 
 class DataProcessor:
@@ -27,6 +31,8 @@ class DataProcessor:
 
         elif data_source == "yahoofinance":
             self.processor = YahooFinance()
+        elif data_source=="local_custom":
+            self.processor = LocalCustom()
 
         else:
             raise ValueError("Data source input is NOT supported yet.")
