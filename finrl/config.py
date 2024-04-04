@@ -1,6 +1,6 @@
 # directory
 from __future__ import annotations
-
+import pandas as pd
 DATA_SAVE_DIR = "datasets"
 TRAINED_MODEL_DIR = "trained_models"
 TENSORBOARD_LOG_DIR = "tensorboard_log"
@@ -18,6 +18,7 @@ TRADE_END_DATE = "2021-12-01"
 
 # stockstats technical indicator column names
 # check https://pypi.org/project/stockstats/ for different names
+# TODO update here to match offline indicator lake data
 INDICATORS = [
     "macd",
     "boll_ub",
@@ -28,6 +29,7 @@ INDICATORS = [
     "close_30_sma",
     "close_60_sma",
 ]
+
 
 
 # Model Parameters
