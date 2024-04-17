@@ -2,10 +2,26 @@ import os
 
 import pandas as pd
 from stockstats import StockDataFrame as Sdf
+import numpy as np
+import exchange_calendars as tc
 class LocalCustom():
+
+
     def __init__(self,local_price_root="/mnt/f/alpha_vantage_raw_csv/",local_indicator_root="/mnt/f/refinery_data/indicators_lake/stock/"):
         self.local_price_root = local_price_root
         self.local_indicator_root = local_indicator_root
+
+
+    def get_trading_days(self, start, end):
+        nyse = tc.get_calendar("NYSE")
+        df = nyse.sessions_in_range(
+            pd.Timestamp(start).tz_localize(None), pd.Timestamp(end).tz_localize(None)
+        )
+        trading_days = []
+        for day in df:
+            trading_days.append(str(day)[:10])
+
+        return trading_days
     # current only support 1m or 5m
     def get_year_month_strings_pandas(self,start_date, end_date, freq='M'):
         if freq == 'M':
@@ -52,7 +68,27 @@ class LocalCustom():
     def df_to_array(self,
         df, tech_indicator_list, if_vix
     ):
-        pass
+        df = df.copy()
+        unique_ticker = df.tic.unique()
+        if_first_time = True
+        for tic in unique_ticker:
+            if if_first_time:
+                price_array = df[df.tic == tic][["close"]].values
+                tech_array = df[df.tic == tic][tech_indicator_list].values
+                if if_vix:
+                    turbulence_array = df[df.tic == tic]["VIXY"].values
+                else:
+                    turbulence_array = df[df.tic == tic]["turbulence"].values
+                if_first_time = False
+            else:
+                price_array = np.hstack(
+                    [price_array, df[df.tic == tic][["close"]].values]
+                )
+                tech_array = np.hstack(
+                    [tech_array, df[df.tic == tic][tech_indicator_list].values]
+                )
+                #        print("Successfully transformed into array")
+        return price_array, tech_array, turbulence_array
 
     def add_technical_indicator(self,df, tech_indicator_list):
         unique_ticker = df.tic.unique()
@@ -155,21 +191,29 @@ class LocalCustom():
     def add_vixor(self, df) -> pd.DataFrame:
         return df
 
+
+
 if __name__ == '__main__':
     localcustom=LocalCustom()
     ticker_list=['AAPL',"NVDA","AMZN","GOOG","FB"]
     start_date="2020-01-01"
     end_date="2024-03-31"
     price_df=localcustom.download_data(ticker_list,start_date,end_date)
-    p_with_indicator=localcustom.add_technical_indicator(price_df,[
+    price_df["VIXY"] = 0
+    vixy_df=localcustom.download_data(["VIXY"],start_date,end_date)
+    tech_list=[
             "macd",
             "boll_ub",
             "boll_lb",
             "rsi_30",
             "dx_30",
             "close_30_sma",
-            "close_60_sma"])
-    print(p_with_indicator)
+            "close_60_sma"]
+    p_with_indicator=localcustom.add_technical_indicator(price_df,tech_list)
+    # print(p_with_indicator)
+    # final_price=localcustom.add_turbulence(p_with_indicator)
+
+    # print(final_price)
     # print(price_df)
     # price_df=price_df[price_df["tic"]=="AAPL"]
     # indicators=Sdf.retype(price_df)
@@ -184,3 +228,5 @@ if __name__ == '__main__':
     #         "close_60_sma"]:
     #     single_indicator=indicators[indicator]
     #     print(single_indicator)
+    price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
+    turb_df=vixy_df["close"].values
