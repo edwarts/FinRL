@@ -4,12 +4,66 @@ import pandas as pd
 from stockstats import StockDataFrame as Sdf
 import numpy as np
 import exchange_calendars as tc
+import pandas_market_calendars as mcal
 class LocalCustom():
 
 
     def __init__(self,local_price_root="/mnt/f/alpha_vantage_raw_csv/",local_indicator_root="/mnt/f/refinery_data/indicators_lake/stock/"):
         self.local_price_root = local_price_root
         self.local_indicator_root = local_indicator_root
+
+    def generate_trading_times(self,start_date, end_date,with_extended=False):
+        # Load NYSE calendar
+        nyse = mcal.get_calendar('NYSE')
+
+        # Get valid trading days within the specified range
+        valid_days = nyse.valid_days(start_date=start_date, end_date=end_date)
+
+        # Define trading hours
+        extended_morning_start = "04:00"
+        regular_start = "09:30"
+        regular_end = "16:00"
+        extended_evening_end = "20:00"
+
+        # Initialize an empty list to store trading minutes
+        trading_minutes = []
+
+        for single_date in valid_days:
+            # Morning extended hours
+            morning_times = pd.date_range(
+                start=pd.Timestamp(f"{single_date.date()} {extended_morning_start}"),
+                end=pd.Timestamp(f"{single_date.date()} {regular_start}"),
+                freq='T',  # 'T' for minute frequency
+                closed='left'
+            )
+
+            # Regular trading hours
+            regular_times = pd.date_range(
+                start=pd.Timestamp(f"{single_date.date()} {regular_start}"),
+                end=pd.Timestamp(f"{single_date.date()} {regular_end}"),
+                freq='T',
+                closed='left'
+            )
+
+            # Evening extended hours
+            evening_times = pd.date_range(
+                start=pd.Timestamp(f"{single_date.date()} {regular_end}"),
+                end=pd.Timestamp(f"{single_date.date()} {extended_evening_end}"),
+                freq='T',
+                closed='left'
+            )
+
+            # Append all times for the day to the list
+            if with_extended==True:
+                trading_minutes.extend(morning_times)
+                trading_minutes.extend(evening_times)
+            trading_minutes.extend(regular_times)
+
+
+        # Convert the list to a DataFrame
+        trading_minutes_df = pd.DataFrame(trading_minutes, columns=['trading_times'])
+
+        return trading_minutes_df
 
 
     def get_trading_days(self, start, end):
@@ -35,12 +89,11 @@ class LocalCustom():
         start_date,
         end_date,
         time_interval="1m",
-        date_interval="M"
+        date_interval="M",with_extend=False
     ):
         dates=self.get_year_month_strings_pandas(start_date,end_date,date_interval)
         final_price_df=pd.DataFrame()
         # get date from the start and end
-
         for ticker in ticker_list:
 
             for each_date in dates:
@@ -48,6 +101,7 @@ class LocalCustom():
                 print(f"Load from {ticker} at path {single_file_path}")
                 single_df=pd.read_csv(single_file_path)
                 single_df['tic']=ticker
+
                 final_price_df=pd.concat([final_price_df,single_df])
         final_price_df['timestamp']=pd.to_datetime(final_price_df['datetime'])
         return final_price_df
@@ -81,9 +135,11 @@ class LocalCustom():
                     turbulence_array = df[df.tic == tic]["turbulence"].values
                 if_first_time = False
             else:
+                add_on_price=df[df.tic == tic][["close"]].values
                 price_array = np.hstack(
-                    [price_array, df[df.tic == tic][["close"]].values]
+                    [price_array, add_on_price]
                 )
+                add_on_tech=df[df.tic == tic][tech_indicator_list].values
                 tech_array = np.hstack(
                     [tech_array, df[df.tic == tic][tech_indicator_list].values]
                 )
@@ -198,25 +254,32 @@ if __name__ == '__main__':
     ticker_list=['AAPL',"NVDA","AMZN","GOOG","FB"]
     start_date="2020-01-01"
     end_date="2024-03-31"
+    #
+    # Usage example:
+    start_date = '2020-01-01'
+    end_date = '2024-03-31'
+    trading_times = localcustom.generate_trading_times(start_date, end_date)
+    print(trading_times)
     price_df=localcustom.download_data(ticker_list,start_date,end_date)
-    price_df["VIXY"] = 0
-    vixy_df=localcustom.download_data(["VIXY"],start_date,end_date)
-    tech_list=[
-            "macd",
-            "boll_ub",
-            "boll_lb",
-            "rsi_30",
-            "dx_30",
-            "close_30_sma",
-            "close_60_sma"]
-    p_with_indicator=localcustom.add_technical_indicator(price_df,tech_list)
-    # print(p_with_indicator)
     # final_price=localcustom.add_turbulence(p_with_indicator)
 
     # print(final_price)
     # print(price_df)
-    # price_df=price_df[price_df["tic"]=="AAPL"]
+    final_price_df = pd.DataFrame()
+    # TODO put merge work trading times key outside and remerge them
+    for each_ticker in ticker_list:
+        price_df=price_df[price_df["tic"]==each_ticker]
+        price_df.set_index('timestamp', inplace=True)
+        trading_times.index = pd.to_datetime(trading_times['trading_times'])
+        result_df = trading_times.merge(price_df, how='left', left_index=True, right_index=True)
+
+        result_df.fillna(method='ffill', inplace=True)
+        final_price_df = pd.concat([final_price_df,result_df])
+        print(final_price_df.isna().sum())
+        # Print the result to check
+        print(final_price_df)
     # indicators=Sdf.retype(price_df)
+    # feeding with only normal working hour
 
     # for indicator in [
     #         "macd",
@@ -228,5 +291,6 @@ if __name__ == '__main__':
     #         "close_60_sma"]:
     #     single_indicator=indicators[indicator]
     #     print(single_indicator)
-    price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
-    turb_df=vixy_df["close"].values
+    # p_with_indicator["VIXY"] = 0
+    # price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
+    # turb_df=vixy_df["close"].values
