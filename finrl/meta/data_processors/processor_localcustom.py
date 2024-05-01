@@ -262,14 +262,14 @@ if __name__ == '__main__':
     print(trading_times)
     price_df=localcustom.download_data(ticker_list,start_date,end_date)
     # final_price=localcustom.add_turbulence(p_with_indicator)
-
+    price_df.set_index('timestamp', inplace=True)
     # print(final_price)
     # print(price_df)
     final_price_df = pd.DataFrame()
     # TODO put merge work trading times key outside and remerge them
     for each_ticker in ticker_list:
         price_df=price_df[price_df["tic"]==each_ticker]
-        price_df.set_index('timestamp', inplace=True)
+
         trading_times.index = pd.to_datetime(trading_times['trading_times'])
         result_df = trading_times.merge(price_df, how='left', left_index=True, right_index=True)
 
@@ -277,20 +277,23 @@ if __name__ == '__main__':
         final_price_df = pd.concat([final_price_df,result_df])
         print(final_price_df.isna().sum())
         # Print the result to check
-        print(final_price_df)
-    # indicators=Sdf.retype(price_df)
+    indicators=Sdf.retype(final_price_df)
     # feeding with only normal working hour
-
-    # for indicator in [
-    #         "macd",
-    #         "boll_ub",
-    #         "boll_lb",
-    #         "rsi_30",
-    #         "dx_30",
-    #         "close_30_sma",
-    #         "close_60_sma"]:
+    #
+    p_with_indicator=pd.DataFrame()
+    tech_list=[
+            "macd",
+            "boll_ub",
+            "boll_lb",
+            "rsi_30",
+            "dx_30",
+            "close_30_sma",
+            "close_60_sma"]
+    # for indicator in tech_list:
     #     single_indicator=indicators[indicator]
     #     print(single_indicator)
-    # p_with_indicator["VIXY"] = 0
-    # price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
+    p_with_indicator=localcustom.add_technical_indicator(final_price_df,tech_list)
+    p_with_indicator["VIXY"] = 0
+    price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
+    print(price_df)
     # turb_df=vixy_df["close"].values
