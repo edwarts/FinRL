@@ -104,17 +104,8 @@ class LocalCustom():
 
                 final_price_df=pd.concat([final_price_df,single_df])
         final_price_df['timestamp']=pd.to_datetime(final_price_df['datetime'])
+        final_price_df['datetime'] = pd.to_datetime(final_price_df['datetime'])
         return final_price_df
-    def add_technical_indicator(self,df, tech_indicator_list=[
-            "macd",
-            "boll_ub",
-            "boll_lb",
-            "rsi_30",
-            "dx_30",
-            "close_30_sma",
-            "close_60_sma",
-        ]):
-        pass
 
     def clean_data(self, df):
         return df
@@ -146,10 +137,49 @@ class LocalCustom():
                 #        print("Successfully transformed into array")
         return price_array, tech_array, turbulence_array
 
+    def add_technical_indicators_to_single_symbol(self,df, tech_indicator_list):
+        unique_ticker = df.tic.unique()
+        stock = Sdf.retype(df)
+        print("Running Loop")
+        # TODO issue here, not be able to get indicator all together, should do one by one
+        # TODO tic issue only AAPL and NaN
+        for indicator in tech_indicator_list:
+            indicator_dfs = []
+            for tic in unique_ticker:
+                tic_data = stock[stock.tic == tic]
+                indicator_series = tic_data[indicator]
+
+                tic_timestamps = stock.loc[stock.tic == tic, "timestamp"]
+
+                indicator_df = pd.DataFrame(
+                    {
+                        "tic": tic,
+                        "date": tic_timestamps.values,
+                        indicator: indicator_series.values,
+                    }
+                )
+                indicator_dfs.append(indicator_df)
+
+            # Concatenate all intermediate dataframes at once
+            indicator_df = pd.concat(indicator_dfs, ignore_index=True)
+
+            # Merge the indicator data frame
+            df = df.merge(
+                indicator_df[["tic", "date", indicator]],
+                left_on=["tic", "timestamp"],
+                right_on=["tic", "date"],
+                how="left",
+            ).drop(columns="date")
+        print("Finished adding Indicators")
+        return df
+
+
     def add_technical_indicator(self,df, tech_indicator_list):
         unique_ticker = df.tic.unique()
         stock = Sdf.retype(df)
         print("Running Loop")
+        # TODO issue here, not be able to get indicator all together, should do one by one
+        # TODO tic issue only AAPL and NaN
         for indicator in tech_indicator_list:
             indicator_dfs = []
             for tic in unique_ticker:
@@ -251,7 +281,9 @@ class LocalCustom():
 
 if __name__ == '__main__':
     localcustom=LocalCustom()
-    ticker_list=['AAPL',"NVDA","AMZN","GOOG","FB"]
+    # NO data for FB
+    # TLSA only 3 months
+    ticker_list=['AAPL',"NVDA","AMZN","GOOG"]
     start_date="2020-01-01"
     end_date="2024-03-31"
     #
@@ -262,38 +294,41 @@ if __name__ == '__main__':
     print(trading_times)
     price_df=localcustom.download_data(ticker_list,start_date,end_date)
     # final_price=localcustom.add_turbulence(p_with_indicator)
-    price_df.set_index('timestamp', inplace=True)
+    price_df.set_index('datetime', inplace=True)
     # print(final_price)
     # print(price_df)
     final_price_df = pd.DataFrame()
+    tech_list = [
+        "macd",
+        "boll_ub",
+        "boll_lb",
+        "rsi_30",
+        "dx_30",
+        "close_30_sma",
+        "close_60_sma"]
     # TODO put merge work trading times key outside and remerge them
+    # TODO new idea, to use prompt with ohlc and indicator to finetune LLam3
+    p_with_indicator = pd.DataFrame()
     for each_ticker in ticker_list:
-        price_df=price_df[price_df["tic"]==each_ticker]
+        each_price_df=price_df[price_df["tic"]==each_ticker]
 
         trading_times.index = pd.to_datetime(trading_times['trading_times'])
-        result_df = trading_times.merge(price_df, how='left', left_index=True, right_index=True)
+        result_df = trading_times.merge(each_price_df, how='left', left_index=True, right_index=True)
 
         result_df.fillna(method='ffill', inplace=True)
         final_price_df = pd.concat([final_price_df,result_df])
-        print(final_price_df.isna().sum())
+        p_with_indicator_t = localcustom.add_technical_indicator(final_price_df, tech_list)
+        p_with_indicator=pd.concat([p_with_indicator,p_with_indicator_t])
+        # print(final_price_df.isna().sum())
         # Print the result to check
-    indicators=Sdf.retype(final_price_df)
+    # indicators=Sdf.retype(final_price_df)
     # feeding with only normal working hour
     #
-    p_with_indicator=pd.DataFrame()
-    tech_list=[
-            "macd",
-            "boll_ub",
-            "boll_lb",
-            "rsi_30",
-            "dx_30",
-            "close_30_sma",
-            "close_60_sma"]
+
     # for indicator in tech_list:
     #     single_indicator=indicators[indicator]
     #     print(single_indicator)
-    p_with_indicator=localcustom.add_technical_indicator(final_price_df,tech_list)
-    p_with_indicator["VIXY"] = 0
+    # p_with_indicator["VIXY"] = 0
     price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
     print(price_df)
     # turb_df=vixy_df["close"].values
