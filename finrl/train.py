@@ -102,46 +102,52 @@ def train(
 
 if __name__ == "__main__":
     env = StockTradingEnv
-
+    ticker_list = ['AAPL', "NVDA", "AMZN", "GOOG"]
+    start_date = "2024-06-03"
+    end_date = "2024-06-20"
+    API_KEY="PKA0QI99DHDTM1TFAO5N"
+    API_SECRET="m8wCetdqmjeGtoAaTrPSKAy9ksr4Ezpd5AylzhK5"
+    API_BASE_URL="https://data.alpaca.markets/v2/stocks/bar"
     # demo for elegantrl
-    kwargs = (
-        {}
-    )  # in current meta, with respect yahoofinance, kwargs is {}. For other data sources, such as joinquant, kwargs is not empty
-    train(
-        start_date=TRAIN_START_DATE,
-        end_date=TRAIN_END_DATE,
-        ticker_list=DOW_30_TICKER,
-        data_source="yahoofinance",
-        time_interval="1D",
-        technical_indicator_list=INDICATORS,
-        drl_lib="elegantrl",
-        env=env,
-        model_name="ppo",
-        cwd="./test_ppo",
-        erl_params=ERL_PARAMS,
-        break_step=1e5,
-        kwargs=kwargs,
-    )
+    kwargs =()
+     # in current meta, with respect yahoofinance, kwargs is {}. For other data sources, such as joinquant, kwargs is not empty
+    # Goog for alpaca parameter but needs to upgrade the alpaca API
+
+    # train(
+    #     start_date=start_date,
+    #     end_date=end_date,
+    #     ticker_list=ticker_list,
+    #     data_source="alpaca",
+    #     time_interval="1Min",
+    #     technical_indicator_list=INDICATORS,
+    #     drl_lib="elegantrl",
+    #     env=env,
+    #     model_name="ppo",
+    #     cwd="./test_ppo_alpaca_anag",
+    #     erl_params=ERL_PARAMS,
+    #     break_step=1e5,
+    #     API_KEY="PKA0QI99DHDTM1TFAO5N",API_SECRET="m8wCetdqmjeGtoAaTrPSKAy9ksr4Ezpd5AylzhK5",API_BASE_URL=API_BASE_URL
+    # )
 
     ## if users want to use rllib, or stable-baselines3, users can remove the following comments
 
     # # demo for rllib
     # import ray
     # ray.shutdown()  # always shutdown previous session if any
-    # train(
-    #     start_date=TRAIN_START_DATE,
-    #     end_date=TRAIN_END_DATE,
-    #     ticker_list=DOW_30_TICKER,
-    #     data_source="yahoofinance",
-    #     time_interval="1D",
-    #     technical_indicator_list=INDICATORS,
-    #     drl_lib="rllib",
-    #     env=env,
-    #     model_name="ppo",
-    #     cwd="./test_ppo",
-    #     rllib_params=RLlib_PARAMS,
-    #     total_episodes=30,
-    # )
+    train(
+        start_date=start_date,
+        end_date=end_date,
+        ticker_list=ticker_list,
+        data_source="yahoofinance",
+        time_interval="1D",
+        technical_indicator_list=INDICATORS,
+        drl_lib="elegantrl",
+        env=env,
+        model_name="ppo",
+        cwd="./test_ppo_yahoo_anag",
+        erl_params=ERL_PARAMS,
+        total_episodes=30,
+    )
     #
     # # demo for stable-baselines3
     # train(
@@ -157,4 +163,20 @@ if __name__ == "__main__":
     #     cwd="./test_sac",
     #     agent_params=SAC_PARAMS,
     #     total_timesteps=1e4,
+    # )
+
+    # another
+    # train(
+    #     start_date=start_date,
+    #     end_date=end_date,
+    #     ticker_list=ticker_list,
+    #     data_source="yahoofinance",
+    #     time_interval="1D",
+    #     technical_indicator_list=INDICATORS,
+    #     drl_lib="rllib",
+    #     env=env,
+    #     model_name="ppo",
+    #     cwd="./test_ppo_yahoo_anag",
+    #     rllib_params=RLlib_PARAMS,
+    #     total_episodes=30,
     # )
