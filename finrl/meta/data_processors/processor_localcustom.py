@@ -174,7 +174,9 @@ class LocalCustom():
         return df
 
 
-    def add_technical_indicator(self,df, tech_indicator_list):
+    def add_technical_indicator(self,data, tech_indicator_list):
+        df = data.copy()
+        df = df.sort_values(by=["tic", "timestamp"])
         unique_ticker = df.tic.unique()
         stock = Sdf.retype(df)
         print("Running Loop")
@@ -284,12 +286,12 @@ if __name__ == '__main__':
     # NO data for FB
     # TLSA only 3 months
     ticker_list=['AAPL',"NVDA","AMZN","GOOG"]
-    start_date="2020-01-01"
-    end_date="2024-03-31"
+    start_date="2024-01-01"
+    end_date="2024-05-31"
     #
     # Usage example:
-    start_date = '2020-01-01'
-    end_date = '2024-03-31'
+    start_date = '2024-01-01'
+    end_date = '2024-05-31'
     trading_times = localcustom.generate_trading_times(start_date, end_date)
     print(trading_times)
     price_df=localcustom.download_data(ticker_list,start_date,end_date)
@@ -317,8 +319,8 @@ if __name__ == '__main__':
 
         result_df.fillna(method='ffill', inplace=True)
         final_price_df = pd.concat([final_price_df,result_df])
-        p_with_indicator_t = localcustom.add_technical_indicator(final_price_df, tech_list)
-        p_with_indicator=pd.concat([p_with_indicator,p_with_indicator_t])
+        # p_with_indicator_t = localcustom.add_technical_indicator(final_price_df, tech_list)
+        # p_with_indicator=pd.concat([p_with_indicator,p_with_indicator_t])
         # print(final_price_df.isna().sum())
         # Print the result to check
     # indicators=Sdf.retype(final_price_df)
@@ -329,6 +331,7 @@ if __name__ == '__main__':
     #     single_indicator=indicators[indicator]
     #     print(single_indicator)
     # p_with_indicator["VIXY"] = 0
-    price_df,tech_df,turb_df=localcustom.df_to_array(p_with_indicator,tech_list,True)
+    p_with_in=localcustom.add_technical_indicator(final_price_df,tech_list)
+    price_df,tech_df,turb_df=localcustom.df_to_array(final_price_df,tech_list,True)
     print(price_df)
     # turb_df=vixy_df["close"].values
