@@ -91,6 +91,10 @@ class LocalCustom():
         time_interval="1m",
         date_interval="M",with_extend=False
     ):
+        self.start=start_date
+        self.end=end_date
+        self.time_interval=time_interval
+        self.date_interval=date_interval
         dates=self.get_year_month_strings_pandas(start_date,end_date,date_interval)
         final_price_df=pd.DataFrame()
         # get date from the start and end
@@ -132,7 +136,7 @@ class LocalCustom():
                 )
                 add_on_tech=df[df.tic == tic][tech_indicator_list].values
                 tech_array = np.hstack(
-                    [tech_array, df[df.tic == tic][tech_indicator_list].values]
+                    [tech_array, add_on_tech]
                 )
                 #        print("Successfully transformed into array")
         return price_array, tech_array, turbulence_array
@@ -275,6 +279,7 @@ class LocalCustom():
         df = df.sort_values(["timestamp", "tic"]).reset_index(drop=True)
         return df
     def add_vix(self,df):
+        # TODO need to add vixy as vix here
         return df
     def add_vixor(self, df) -> pd.DataFrame:
         return df
@@ -332,6 +337,7 @@ if __name__ == '__main__':
     #     print(single_indicator)
     # p_with_indicator["VIXY"] = 0
     p_with_in=localcustom.add_technical_indicator(final_price_df,tech_list)
-    price_df,tech_df,turb_df=localcustom.df_to_array(final_price_df,tech_list,True)
+    p_with_in["VIXY"] = 0
+    price_df,tech_df,turb_df=localcustom.df_to_array(p_with_in,tech_list,True)
     print(price_df)
     # turb_df=vixy_df["close"].values
