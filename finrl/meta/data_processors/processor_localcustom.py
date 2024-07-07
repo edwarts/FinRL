@@ -278,8 +278,26 @@ class LocalCustom():
         df = df.merge(turbulence_index, on="timestamp")
         df = df.sort_values(["timestamp", "tic"]).reset_index(drop=True)
         return df
-    def add_vix(self,df):
+    def add_vix(self,data):
         # TODO need to add vixy as vix here
+        vix_df=self.download_data(["VIXY"],self.start,self.end,self.time_interval,self.date_interval)
+        vix_df.set_index('datetime', inplace=True)
+        trading_times = self.generate_trading_times(self.start, self.end)
+        trading_times.index = pd.to_datetime(trading_times['trading_times'])
+        result_df = trading_times.merge(vix_df, how='left', left_index=True, right_index=True)
+        result_df.fillna(method='ffill', inplace=True)
+        # df["VIXY"] = result_df["close"]
+        vix = result_df[["timestamp", "close"]]
+        vix = vix.rename(columns={"close": "VIXY"})
+        print('vix.rename(columns={"close": "VIXY"}\n', vix)
+
+        df = data.copy()
+        print("df\n", df)
+        df = df.merge(vix, on="timestamp")
+        df = df.sort_values(["timestamp", "tic"]).reset_index(drop=True)
+
+
+
         return df
     def add_vixor(self, df) -> pd.DataFrame:
         return df
@@ -337,7 +355,7 @@ if __name__ == '__main__':
     #     print(single_indicator)
     # p_with_indicator["VIXY"] = 0
     p_with_in=localcustom.add_technical_indicator(final_price_df,tech_list)
-    p_with_in["VIXY"] = 0
+    p_with_in=localcustom.add_vix(p_with_in)
     price_df,tech_df,turb_df=localcustom.df_to_array(p_with_in,tech_list,True)
     print(price_df)
     # turb_df=vixy_df["close"].values
