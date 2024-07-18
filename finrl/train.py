@@ -32,6 +32,7 @@ def train(
     data = dp.clean_data(data)
     data = dp.add_technical_indicator(data, technical_indicator_list)
     if if_vix:
+        # TODO issue here
         data = dp.add_vix(data)
     price_array, tech_array, turbulence_array = dp.df_to_array(data, if_vix)
     env_config = {
@@ -103,8 +104,8 @@ def train(
 if __name__ == "__main__":
     env = StockTradingEnv
     ticker_list = ['AAPL', "NVDA", "AMZN", "GOOG"]
-    start_date = "2024-06-03"
-    end_date = "2024-06-20"
+    start_date = "2024-04-01"
+    end_date = "2024-05-31"
     API_KEY="PKA0QI99DHDTM1TFAO5N"
     API_SECRET="m8wCetdqmjeGtoAaTrPSKAy9ksr4Ezpd5AylzhK5"
     API_BASE_URL="https://data.alpaca.markets/v2/stocks/bar"
@@ -134,21 +135,9 @@ if __name__ == "__main__":
     # # demo for rllib
     # import ray
     # ray.shutdown()  # always shutdown previous session if any
-    train(
-        start_date=start_date,
-        end_date=end_date,
-        ticker_list=ticker_list,
-        data_source="yahoofinance",
-        time_interval="1D",
-        technical_indicator_list=INDICATORS,
-        drl_lib="elegantrl",
-        env=env,
-        model_name="ppo",
-        cwd="./test_ppo_yahoo_anag",
-        erl_params=ERL_PARAMS,
-        total_episodes=30,
-    )
     #
+
+
     # # demo for stable-baselines3
     # train(
     #     start_date=TRAIN_START_DATE,
@@ -165,7 +154,22 @@ if __name__ == "__main__":
     #     total_timesteps=1e4,
     # )
 
-    # another
+    train(
+        start_date=start_date,
+        end_date=end_date,
+        ticker_list=ticker_list,
+        data_source="local_custom",
+        time_interval="1m",
+        technical_indicator_list=INDICATORS,
+        drl_lib="stable_baselines3",
+        env=env,
+        model_name="ppo",
+        cwd="./test_ppo_1m_custom1",
+        rllib_params=RLlib_PARAMS,
+        total_episodes=30,
+    )
+
+    # another # TODO good settings for yahoofinance
     # train(
     #     start_date=start_date,
     #     end_date=end_date,

@@ -34,7 +34,7 @@ class LocalCustom():
                 start=pd.Timestamp(f"{single_date.date()} {extended_morning_start}"),
                 end=pd.Timestamp(f"{single_date.date()} {regular_start}"),
                 freq='T',  # 'T' for minute frequency
-                closed='left'
+                inclusive='left'
             )
 
             # Regular trading hours
@@ -42,7 +42,7 @@ class LocalCustom():
                 start=pd.Timestamp(f"{single_date.date()} {regular_start}"),
                 end=pd.Timestamp(f"{single_date.date()} {regular_end}"),
                 freq='T',
-                closed='left'
+                inclusive='left'
             )
 
             # Evening extended hours
@@ -50,7 +50,7 @@ class LocalCustom():
                 start=pd.Timestamp(f"{single_date.date()} {regular_end}"),
                 end=pd.Timestamp(f"{single_date.date()} {extended_evening_end}"),
                 freq='T',
-                closed='left'
+                inclusive='left'
             )
 
             # Append all times for the day to the list
@@ -313,7 +313,7 @@ if __name__ == '__main__':
     end_date="2024-05-31"
     #
     # Usage example:
-    start_date = '2024-01-01'
+    start_date = '2024-04-01'
     end_date = '2024-05-31'
     trading_times = localcustom.generate_trading_times(start_date, end_date)
     print(trading_times)
