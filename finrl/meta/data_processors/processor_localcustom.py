@@ -111,8 +111,18 @@ class LocalCustom():
         final_price_df['datetime'] = pd.to_datetime(final_price_df['datetime'])
         return final_price_df
 
-    def clean_data(self, df):
-        return df
+    def clean_data(self, price_df_v):
+        price_df=price_df_v.copy()
+        ticker_list = np.unique(price_df.tic.values)
+        for each_ticker in ticker_list:
+            each_price_df = price_df[price_df["tic"] == each_ticker]
+            trading_times = localcustom.generate_trading_times(start_date, end_date)
+            trading_times.index = pd.to_datetime(trading_times['trading_times'])
+            result_df = trading_times.merge(each_price_df, how='left', left_index=True, right_index=True)
+
+            result_df.fillna(method='ffill', inplace=True)
+            final_price_df = pd.concat([final_price_df, result_df])
+        return price_df
 
     def df_to_array(self,
         df, tech_indicator_list, if_vix
@@ -315,8 +325,8 @@ if __name__ == '__main__':
     # Usage example:
     start_date = '2024-04-01'
     end_date = '2024-05-31'
-    trading_times = localcustom.generate_trading_times(start_date, end_date)
-    print(trading_times)
+
+    # print(trading_times)
     price_df=localcustom.download_data(ticker_list,start_date,end_date)
     # final_price=localcustom.add_turbulence(p_with_indicator)
     price_df.set_index('datetime', inplace=True)
@@ -337,6 +347,7 @@ if __name__ == '__main__':
     for each_ticker in ticker_list:
         each_price_df=price_df[price_df["tic"]==each_ticker]
 
+        trading_times = localcustom.generate_trading_times(start_date, end_date)
         trading_times.index = pd.to_datetime(trading_times['trading_times'])
         result_df = trading_times.merge(each_price_df, how='left', left_index=True, right_index=True)
 
