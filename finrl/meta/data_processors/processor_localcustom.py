@@ -113,16 +113,18 @@ class LocalCustom():
 
     def clean_data(self, price_df_v):
         price_df=price_df_v.copy()
+        price_df.set_index('datetime', inplace=True)
         ticker_list = np.unique(price_df.tic.values)
+        final_price_df = pd.DataFrame()
         for each_ticker in ticker_list:
             each_price_df = price_df[price_df["tic"] == each_ticker]
-            trading_times = localcustom.generate_trading_times(start_date, end_date)
+            trading_times = self.generate_trading_times(self.start, self.end)
             trading_times.index = pd.to_datetime(trading_times['trading_times'])
             result_df = trading_times.merge(each_price_df, how='left', left_index=True, right_index=True)
 
             result_df.fillna(method='ffill', inplace=True)
             final_price_df = pd.concat([final_price_df, result_df])
-        return price_df
+        return final_price_df
 
     def df_to_array(self,
         df, tech_indicator_list, if_vix

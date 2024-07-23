@@ -161,11 +161,11 @@ if __name__ == "__main__":
         data_source="local_custom",
         time_interval="1m",
         technical_indicator_list=INDICATORS,
-        drl_lib="stable_baselines3",
+        drl_lib="elegantrl",
         env=env,
         model_name="ppo",
         cwd="./test_ppo_1m_custom1",
-        rllib_params=RLlib_PARAMS,
+        erl_params=ERL_PARAMS,
         total_episodes=30,
     )
 
@@ -181,6 +181,6 @@ if __name__ == "__main__":
     #     env=env,
     #     model_name="ppo",
     #     cwd="./test_ppo_yahoo_anag",
-    #     rllib_params=RLlib_PARAMS,
+    #     erl_params=ERL_PARAMS,
     #     total_episodes=30,
     # )
