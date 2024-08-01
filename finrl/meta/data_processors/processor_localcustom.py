@@ -142,14 +142,28 @@ class LocalCustom():
                     turbulence_array = df[df.tic == tic]["turbulence"].values
                 if_first_time = False
             else:
-                add_on_price=df[df.tic == tic][["close"]].values
-                price_array = np.hstack(
-                    [price_array, add_on_price]
-                )
-                add_on_tech=df[df.tic == tic][tech_indicator_list].values
-                tech_array = np.hstack(
-                    [tech_array, add_on_tech]
-                )
+                try:
+                    add_on_price=df[df.tic == tic][["close"]].values
+                    # debug TODO
+                    trading_times_debug=df[df.tic == tic]["trading_times"].values
+                    # Find unique elements and their counts
+                    unique_elements, counts = np.unique(trading_times_debug, return_counts=True)
+
+                    # Find duplicates
+                    # TODO issue found some dates are duplicate
+                    duplicates = unique_elements[counts > 1]
+                    price_array = np.hstack(
+                        [price_array, add_on_price]
+                    )
+                    add_on_tech=df[df.tic == tic][tech_indicator_list].values
+                    tech_array = np.hstack(
+                        [tech_array, add_on_tech]
+                    )
+                except Exception as es:
+                    print("size of price_array for tick {} is {}".format(tic,len(price_array)))
+                    print("size of add on price array {} ".format(len(add_on_price)))
+                    print("size of tech for tick {} is {}".format(tic,len(price_array)))
+                    print("size of add on tech_array {}".format(len(add_on_tech)))
                 #        print("Successfully transformed into array")
         return price_array, tech_array, turbulence_array
 
@@ -180,6 +194,7 @@ class LocalCustom():
             indicator_df = pd.concat(indicator_dfs, ignore_index=True)
 
             # Merge the indicator data frame
+            # TODO , issue may here, add too many useless data
             df = df.merge(
                 indicator_df[["tic", "date", indicator]],
                 left_on=["tic", "timestamp"],
@@ -291,7 +306,7 @@ class LocalCustom():
         df = df.sort_values(["timestamp", "tic"]).reset_index(drop=True)
         return df
     def add_vix(self,data):
-        # TODO need to add vixy as vix here
+
         vix_df=self.download_data(["VIXY"],self.start,self.end,self.time_interval,self.date_interval)
         vix_df.set_index('datetime', inplace=True)
         trading_times = self.generate_trading_times(self.start, self.end)
@@ -320,12 +335,13 @@ if __name__ == '__main__':
     localcustom=LocalCustom()
     # NO data for FB
     # TLSA only 3 months
-    ticker_list=['AAPL',"NVDA","AMZN","GOOG"]
-    start_date="2024-01-01"
+    # ticker_list=['AAPL',"NVDA","AMZN","GOOG"]
+    ticker_list = ['AAPL',"GOOG"]
+    start_date="2023-05-01"
     end_date="2024-05-31"
     #
     # Usage example:
-    start_date = '2024-04-01'
+    start_date = '2023-05-01'
     end_date = '2024-05-31'
 
     # print(trading_times)

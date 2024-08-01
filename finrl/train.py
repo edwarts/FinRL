@@ -32,7 +32,7 @@ def train(
     data = dp.clean_data(data)
     data = dp.add_technical_indicator(data, technical_indicator_list)
     if if_vix:
-        # TODO issue here
+        # TODO issue here GOOG makes the incorrect with vix
         data = dp.add_vix(data)
     price_array, tech_array, turbulence_array = dp.df_to_array(data, if_vix)
     env_config = {
@@ -103,8 +103,8 @@ def train(
 
 if __name__ == "__main__":
     env = StockTradingEnv
-    ticker_list = ['AAPL', "NVDA", "AMZN", "GOOG"]
-    start_date = "2024-04-01"
+    ticker_list = ['AAPL', "NVDA", "GOOG"]
+    start_date = "2023-01-01"
     end_date = "2024-05-31"
     API_KEY="PKA0QI99DHDTM1TFAO5N"
     API_SECRET="m8wCetdqmjeGtoAaTrPSKAy9ksr4Ezpd5AylzhK5"
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         drl_lib="elegantrl",
         env=env,
         model_name="ppo",
-        cwd="./test_ppo_1m_custom1",
+        cwd="./test_ppo_1m_custom1-goog_test-20230501-20240531",
         erl_params=ERL_PARAMS,
         total_episodes=30,
     )
