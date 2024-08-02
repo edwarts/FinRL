@@ -172,7 +172,6 @@ class LocalCustom():
         stock = Sdf.retype(df)
         print("Running Loop")
         # TODO issue here, not be able to get indicator all together, should do one by one
-        # TODO tic issue only AAPL and NaN
         for indicator in tech_indicator_list:
             indicator_dfs = []
             for tic in unique_ticker:
@@ -201,6 +200,7 @@ class LocalCustom():
                 right_on=["tic", "date"],
                 how="left",
             ).drop(columns="date")
+
         print("Finished adding Indicators")
         return df
 
@@ -234,12 +234,15 @@ class LocalCustom():
             indicator_df = pd.concat(indicator_dfs, ignore_index=True)
 
             # Merge the indicator data frame
+            # TODO data added from here may use yahoo one or other way
             df = df.merge(
                 indicator_df[["tic", "date", indicator]],
-                left_on=["tic", "timestamp"],
-                right_on=["tic", "date"],
+                on=["tic", "timestamp"],
                 how="left",
             ).drop(columns="date")
+        # TODO debug point value
+        df_len = len(df)
+        print(df_len)
         print("Finished adding Indicators")
         return df
 
