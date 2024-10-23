@@ -207,7 +207,8 @@ class LocalCustom():
 
     def add_technical_indicator(self,data, tech_indicator_list):
         df = data.copy()
-        df = df.sort_values(by=["tic", "timestamp"])
+        df["date"]=df["timestamp"]
+        df = df.sort_values(by=["tic", "timestamp","date"])
         unique_ticker = df.tic.unique()
         stock = Sdf.retype(df)
         print("Running Loop")
@@ -237,7 +238,7 @@ class LocalCustom():
             # TODO data added from here may use yahoo one or other way
             df = df.merge(
                 indicator_df[["tic", "date", indicator]],
-                on=["tic", "timestamp"],
+                on=["tic", "date"],
                 how="left",
             ).drop(columns="date")
         # TODO debug point value
