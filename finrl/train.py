@@ -164,7 +164,7 @@ if __name__ == "__main__":
         drl_lib="elegantrl",
         env=env,
         model_name="ppo",
-        cwd="./test_ppo_1m_custom1-goog_test-20230501-20240531",
+        cwd="./test_ppo_1m_custom1-goog_test-20230501-20240531-n1",
         erl_params=ERL_PARAMS,
         total_episodes=30,
     )

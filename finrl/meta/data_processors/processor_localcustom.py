@@ -235,16 +235,18 @@ class LocalCustom():
             indicator_df = pd.concat(indicator_dfs, ignore_index=True)
 
             # Merge the indicator data frame
-            # TODO data added from here may use yahoo one or other way
+            # Fix 27 Oct 2024 the issue found is date had been dropped, so not drop it, drop it at end
             df = df.merge(
                 indicator_df[["tic", "date", indicator]],
                 on=["tic", "date"],
                 how="left",
-            ).drop(columns="date")
+            )
+
+        print("Finished adding Indicators")
+        df=df.drop(columns="date")
         # TODO debug point value
         df_len = len(df)
         print(df_len)
-        print("Finished adding Indicators")
         return df
 
     def calculate_turbulence(self, data, time_period=252):
