@@ -131,6 +131,7 @@ class LocalCustom():
     ):
         df = df.copy()
         unique_ticker = df.tic.unique()
+        # TODO uplicate is from original price, so need to removed duiplicate
         if_first_time = True
         for tic in unique_ticker:
             if if_first_time:
