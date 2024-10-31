@@ -8,9 +8,13 @@ import pandas_market_calendars as mcal
 class LocalCustom():
 
 
-    def __init__(self,local_price_root="/mnt/f/alpha_vantage_raw_csv/",local_indicator_root="/mnt/f/refinery_data/indicators_lake/stock/"):
+    def __init__(self,start_date="2024-01-01",end_date="2024-10-31",with_extended=False,local_price_root="/mnt/f/alpha_vantage_raw_csv/",local_indicator_root="/mnt/f/refinery_data/indicators_lake/stock/"):
         self.local_price_root = local_price_root
         self.local_indicator_root = local_indicator_root
+        self.start_date=start_date
+        self.end_date = end_date
+        self.with_extended=with_extended
+        self.times_index=self.generate_trading_times(self.start_date,self.end_date,self.with_extended)
 
     def generate_trading_times(self,start_date, end_date,with_extended=False):
         # Load NYSE calendar
@@ -130,8 +134,10 @@ class LocalCustom():
         df, tech_indicator_list, if_vix
     ):
         df = df.copy()
+        df.drop_duplicates(inplace=True)
         unique_ticker = df.tic.unique()
-        # TODO uplicate is from original price, so need to removed duiplicate
+        # TODO duplicate is from original price, so need to removed duiplicate,
+        # TODO remove duplicate not work , need to join with trading times individually
         if_first_time = True
         for tic in unique_ticker:
             if if_first_time:
@@ -214,7 +220,6 @@ class LocalCustom():
         stock = Sdf.retype(df)
         print("Running Loop")
         # TODO issue here, not be able to get indicator all together, should do one by one
-        # TODO tic issue only AAPL and NaN
         for indicator in tech_indicator_list:
             indicator_dfs = []
             for tic in unique_ticker:
@@ -237,6 +242,7 @@ class LocalCustom():
 
             # Merge the indicator data frame
             # Fix 27 Oct 2024 the issue found is date had been dropped, so not drop it, drop it at end
+            # TODO issue here, merge too many times
             df = df.merge(
                 indicator_df[["tic", "date", indicator]],
                 on=["tic", "date"],
